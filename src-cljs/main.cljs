@@ -1,15 +1,11 @@
-(ns hello-cljs.main
-  (:use [jayq.core :only [$ css]]))
+(ns event-thread.main
+  (:require [event-thread.knockout :as ko])
+  (:use [jayq.util :only [log]]))
 
-; Logging
+(def logan 
+  (js-obj "name" (ko/observable "Logan")
+          "age"  (ko/observable 25) 
+          "save"  #(log "Saved!")))
 
-(defn log [output]
-  (.log js/console output))
-
-(log "Hello, World!")
-
-; jQuerying
-
-(-> ($ "#copy")
-    (css {:background "Blue"}))
+(ko/apply-bindings logan)
 

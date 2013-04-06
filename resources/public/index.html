@@ -3,11 +3,16 @@
     <title>Even thread</title>
   </head>
   <body>
-    <span id="copy">
-      The quick brown fox jumped over the lazy dog.
-    </span>
+
+    <div>
+      <span data-bind="text: name">Name</span>
+      <span data-bind="text: age">Age</span>
+      <a href="#" data-bind="click: save">Save</a>
+    </div>
 
     <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="js/knockout-2.2.1.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
+
   </body>
 </html>
