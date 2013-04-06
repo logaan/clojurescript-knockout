@@ -1,4 +1,7 @@
 (ns hello-cljs.main)
 
-(js/alert "Hello from ClojureScript.")
+(defn log [output]
+  (.log js/console output))
+
+(log "Hello, World!")
 
