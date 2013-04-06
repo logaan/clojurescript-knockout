@@ -1,4 +1,4 @@
-(ns event-thread.knockout)
+(ns knockout)
 
 (def observable (.-observable js/ko))
 
