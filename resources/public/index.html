@@ -1,17 +1,29 @@
 <html>
  <head>
     <title>Even thread</title>
+    <style>
+      label { display: block; }
+    </style>
   </head>
   <body>
 
-    <div>
-      <span data-bind="text: name">Name</span>
-      <span data-bind="text: age">Age</span>
-      <a href="#" data-bind="click: save">Save</a>
-    </div>
+    <form>
+      <p>
+        <label for="name">Name</label>
+        <input id="name">
+      </p>
 
-    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
-    <script type="text/javascript" src="js/knockout-2.2.1.js"></script>
+      <p>
+        <label for="age">Age</label>
+        <input id="age">
+      </p>
+
+      <p>
+        <button id="save">Save</button>
+      </p>
+    </form>
+
+    <script type="text/javascript" src="js/jquery.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
 
   </body>
