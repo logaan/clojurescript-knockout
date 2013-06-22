@@ -16,21 +16,21 @@
         (assoc :last-click nil))
     (assoc state :last-click click)))
 
-(test {:double-clicks [{:time 40}]
-       :last-click nil}
-      (identify-double-click {:double-clicks []
-                              :last-click {:time 1}}
-                             {:time 40}))
-
-(test {:double-clicks []
-       :last-click {:time 40}}
-      (identify-double-click {:double-clicks []
-                              :last-click nil}
-                             {:time 40}))
+; (test {:double-clicks [{:time 40}]
+;        :last-click nil}
+;       (identify-double-click {:double-clicks []
+;                               :last-click {:time 1}}
+;                              {:time 40}))
+; 
+; (test {:double-clicks []
+;        :last-click {:time 40}}
+;       (identify-double-click {:double-clicks []
+;                               :last-click nil}
+;                              {:time 40}))
 
 (def clicks [{:time 0} {:time 100} {:time 101} {:time 160} {:time 200}])
 
 (def double-clicks
   (:double-clicks (reduce identify-double-click {:double-clicks []} clicks)))
 
-(test [{:time 101} {:time 200}] double-clicks)
+; (test [{:time 101} {:time 200}] double-clicks)

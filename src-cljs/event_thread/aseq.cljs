@@ -109,15 +109,30 @@
           empty-acell
           values))
 
-(defn aeach [f coll]
-  (jq/done (afirst coll) f)
-  (jq/done (arest  coll)
-           (fn [tail] (aeach f tail))))
+(defn async-map [f coll]
+  (let [new-first (jq/$deferred)
+        new-rest  (jq/$deferred)]
+    (jq/done (afirst coll)
+             (fn [head] (jq/resolve new-first (f head))))
+    (jq/done (arest coll)
+             (fn [tail] (jq/resolve new-rest (async-map f tail))))
+    (acell new-first new-rest)))
 
-(aeach log (aseq (map deferred [1 2 3])))
+; (->> [1 2 3]
+;      (map deferred)
+;      aseq
+;      (async-map (partial + 1))
+;      (async-map log))
 
-; (doall
-;   (->> [1 2 3]
-;        (map deferred)
-;        (map (fn [d] (jq/done d log)))))
+(let [first-event     (jq/$deferred)
+      second-event    (jq/$deferred)
+      events          (aseq [first-event second-event])
+      raw-log         (async-map log events)
+      squared-events  (async-map #(* % %) events)
+      squared-log     (async-map log squared-events)]
+  (jq/resolve first-event  3)
+  (jq/resolve first-event  30)
+  (jq/resolve second-event 5))
+
+;(async-map log (async-map (fn [v] (+ 1 v)) (aseq (map deferred [1 2 3]))))
 
