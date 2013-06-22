@@ -3,42 +3,6 @@
         [jayq.util :only [log]])
   (:require [jayq.core :as jq]))
 
-; (defprotocol Aseq
-;   (afirst [coll])
-;   (arest  [coll])
-;   (acons  [coll value]))
-; 
-; (defrecord ACell [first rest]
-;   Aseq
-;   (afirst [coll callback]
-;     (callback (:first coll)))
-;   (arest  [coll callback]
-;     [coll callback])
-;   (acons  [coll value]
-;     (ACell. value coll)))
-; 
-; (defrecord EmptyACell []
-;   Aseq
-;   (afirst [coll callback]
-;     (callback nil))
-;   (arest [coll callback]
-;     [coll callback])
-;   (acons [coll value]
-;     (ACell. coll value)))
-; 
-; (defn aseq [seed-values]
-;   (reduce (fn [c v] (acons c v)) (EmptyACell.) seed-values))
-; 
-; (afirst (ACell. 1 2)
-;         (fn [v] (test 1 v)))
-; 
-; (test (acons (acons (acons (EmptyACell.) 1) 2) 3) (aseq [1 2 3]))
-
-; Create an empty aseq
-; Have someone request first
-; Deliver first
-; Test that the requester gets the value
-
 ; So... what if it's just a future wrapped around a cons cell?
 ;
 ; Means you can:
@@ -113,26 +77,29 @@
   (let [new-first (jq/$deferred)
         new-rest  (jq/$deferred)]
     (jq/done (afirst coll)
-             (fn [head] (jq/resolve new-first (f head))))
+             (fn [head]
+               (jq/done (f head) (fn [result]
+                                   (jq/resolve new-first result)))))
     (jq/done (arest coll)
              (fn [tail] (jq/resolve new-rest (async-map f tail))))
     (acell new-first new-rest)))
 
-; (->> [1 2 3]
-;      (map deferred)
-;      aseq
-;      (async-map (partial + 1))
-;      (async-map log))
+(->> [1 2 3]
+     (map deferred)
+     aseq
+     (async-map (comp deferred (partial + 1)))
+     (async-map (comp deferred log)))
 
-(let [first-event     (jq/$deferred)
-      second-event    (jq/$deferred)
-      events          (aseq [first-event second-event])
-      raw-log         (async-map log events)
-      squared-events  (async-map #(* % %) events)
-      squared-log     (async-map log squared-events)]
-  (jq/resolve first-event  3)
-  (jq/resolve first-event  30)
-  (jq/resolve second-event 5))
+; (let [first-event     (jq/$deferred)
+;       second-event    (jq/$deferred)
+;       events          (aseq [first-event second-event])
+;       raw-log         (async-map (comp deferred log)  events)
+;       squared-events  (async-map #(deferred (* % %))  events)
+;       squared-log     (async-map (comp deferred log)  squared-events)
+;       plussed-events  (async-map #(deferred (+ 10 %)) squared-events)
+;       plussed-log     (async-map (comp deferred log)  plussed-events)]
+;   (jq/resolve first-event  3)
+;   (jq/resolve second-event 5))
 
 ;(async-map log (async-map (fn [v] (+ 1 v)) (aseq (map deferred [1 2 3]))))
 
