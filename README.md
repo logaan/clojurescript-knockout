@@ -1,16 +1,12 @@
-# event-thread
+# Event thread
 
-A Clojure library designed to ... well, that part is up to you.
+Event thread is an attempt at making a functional reactive library. Reactive
+libraries already exist, things like Backbone and Knockout.js. There are even
+some (mostly) functional ones like Bacon.js. This will bring the goodness to
+Clojurescript. Clojurescript will let us use macros to hide any continuation
+passing style code.
 
-## Usage
-
-FIXME
-
-## License
-
-Copyright © 2013 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+## Design Notes
 
 So lets just keep it simple at start without it being a seq of futures. How do
 you deal with the first value. Because you need to be able to hand someone the
