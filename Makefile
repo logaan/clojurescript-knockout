@@ -1,2 +1,4 @@
+repl:
+	screen -t "cljs repl" lein trampoline cljsbuild repl-rhino
 watch:
-	screen -t "cljsbuild auto" lein cljsbuild auto
+	screen -t "cljs autobuild" lein cljsbuild auto
