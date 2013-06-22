@@ -1,5 +1,9 @@
 # Event thread
 
+All the good stuff is in
+[`src-cljs/event_thread/aseq.cljs`]
+(http://github.railscamp.org/logaan/frp/blob/master/src-cljs/event\_thread/aseq.cljs)
+
 Event thread is an attempt at making a functional reactive library. Reactive
 libraries already exist, things like Backbone and Knockout.js. There are even
 some (mostly) functional ones like Bacon.js. This will bring the goodness to

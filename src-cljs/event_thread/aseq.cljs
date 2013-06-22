@@ -149,3 +149,5 @@
 ; It might be worth just having producer return a pair of writer and reader.
 ; The only reasonable usage seems to be to grab a writer and deref immediately.
 
+(defn reduce [f seed coll]
+  )
