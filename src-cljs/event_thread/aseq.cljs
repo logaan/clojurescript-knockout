@@ -126,3 +126,25 @@
 ;   (produce writer 3)
 ;   (produce writer 5))
 
+(defn async-merge [as1 as2]
+  (let [writer        (producer)
+        output-seq    (deref writer)
+        add-to-writer (partial produce writer)]
+    (async-mapd add-to-writer as1)
+    (async-mapd add-to-writer as2)
+    output-seq))
+
+(let [writer1    (producer)
+      input1     (deref writer1)
+      writer2    (producer)
+      input2     (deref writer2)
+      merged     (async-merge input1 input2)
+      multiplied (async-mapd (partial * 2) merged)
+      logged     (async-mapd log multiplied)]
+  (produce writer1 1)
+  (produce writer2 2)
+  (produce writer1 1)
+  (produce writer2 2))
+
+; It might be worth just having producer return a pair of writer and reader.
+; The only reasonable usage seems to be to grab a writer and deref immediately.
