@@ -34,3 +34,11 @@ eventually request the tail they'll get the same one.
 
 The problem is that there's no way to say that the stream is dead. But I'm not
 sure if that's a huge concern.
+
+----------
+
+So it's kind of done-ish now. So... if we change it to wrap the cell in a
+delegate. Then we have a legit seq, but it only ever returns futures... But we
+can't have that because things are going to expect rest to return something
+that we can get values directly out of. Which is ok, but we need to know when
+not to give any more rest.... Hmm perhaps the current way is best.
