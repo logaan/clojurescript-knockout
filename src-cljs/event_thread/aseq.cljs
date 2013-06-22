@@ -48,16 +48,12 @@
 ; match up. So we won't be able to use the default map or anything but... maybe
 ; that's the best we can have.
 
-(defn acell [first rest]
-  {:first (or first jq/$deferred)
-   :rest  (or rest  jq/$deferred)})
+(defn acell
+  ([] (acell (jq/$deferred) (jq/$deferred)))
+  ([first rest] {:first first :rest rest}))
 
 (defn deferred [value]
   (jq/resolve (jq/$deferred) value))
-
-(def empty-acell
-  {:first (jq/$deferred)
-   :rest  (jq/$deferred)})
 
 (defn afirst [aseq]
   (:first aseq))
@@ -70,7 +66,7 @@
 
 (defn aseq [values]
   (reduce (fn [coll v] (acons v coll))
-          empty-acell
+          (acell)
           values))
 
 (defn async-map [f coll]
@@ -84,11 +80,8 @@
              (fn [tail] (jq/resolve new-rest (async-map f tail))))
     (acell new-first new-rest)))
 
-(->> [1 2 3]
-     (map deferred)
-     aseq
-     (async-map (comp deferred (partial + 1)))
-     (async-map (comp deferred log)))
+(defn async-mapd [f coll]
+  (async-map (comp deferred f) coll))
 
 ; (let [first-event     (jq/$deferred)
 ;       second-event    (jq/$deferred)
@@ -101,5 +94,31 @@
 ;   (jq/resolve first-event  3)
 ;   (jq/resolve second-event 5))
 
-;(async-map log (async-map (fn [v] (+ 1 v)) (aseq (map deferred [1 2 3]))))
+(defn producer []
+  (atom (acell)))
+
+(defn produce [producer value]
+  (let [new-cell (acell)
+        old-cell (deref producer)
+        old-first (afirst old-cell)
+        old-rest  (arest  old-cell)]
+    (jq/resolve old-first value)
+    (jq/resolve old-rest  new-cell)
+    (reset! producer new-cell)))
+
+; (let [writer        (producer)
+;       reader        (deref writer)
+;       logged-events (async-map (comp deferred log) reader)]
+;   (produce writer 1)
+;   (produce writer 2))
+
+(let [writer          (producer)
+      events          (deref writer)
+      raw-log         (async-mapd log  events)
+      squared-events  (async-mapd #(* % %)  events)
+      squared-log     (async-mapd log  squared-events)
+      plussed-events  (async-mapd (partial + 10) squared-events)
+      plussed-log     (async-mapd log  plussed-events)]
+  (produce writer 3)
+  (produce writer 5))
 
