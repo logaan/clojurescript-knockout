@@ -47,6 +47,10 @@
 ; they'll have the same interface as ISeq but the resturn value of rest won't
 ; match up. So we won't be able to use the default map or anything but... maybe
 ; that's the best we can have.
+;
+; I guess the structure of a future wrapped around a cell would actually be
+; simpler than the map with two keys. It would mean that the value returned
+; from rest is actually a 'collection'.
 
 (defn acell
   ([] (acell (jq/$deferred) (jq/$deferred)))
@@ -86,11 +90,11 @@
 ; (let [first-event     (jq/$deferred)
 ;       second-event    (jq/$deferred)
 ;       events          (aseq [first-event second-event])
-;       raw-log         (async-map (comp deferred log)  events)
-;       squared-events  (async-map #(deferred (* % %))  events)
-;       squared-log     (async-map (comp deferred log)  squared-events)
-;       plussed-events  (async-map #(deferred (+ 10 %)) squared-events)
-;       plussed-log     (async-map (comp deferred log)  plussed-events)]
+;       raw-log         (async-mapd log events)
+;       squared-events  (async-mapd #(* % %) events)
+;       squared-log     (async-mapd log squared-events)
+;       plussed-events  (async-mapd #(+ 10 %) squared-events)
+;       plussed-log     (async-mapd log plussed-events)]
 ;   (jq/resolve first-event  3)
 ;   (jq/resolve second-event 5))
 
@@ -108,17 +112,17 @@
 
 ; (let [writer        (producer)
 ;       reader        (deref writer)
-;       logged-events (async-map (comp deferred log) reader)]
+;       logged-events (async-mapd log reader)]
 ;   (produce writer 1)
 ;   (produce writer 2))
 
-(let [writer          (producer)
-      events          (deref writer)
-      raw-log         (async-mapd log  events)
-      squared-events  (async-mapd #(* % %)  events)
-      squared-log     (async-mapd log  squared-events)
-      plussed-events  (async-mapd (partial + 10) squared-events)
-      plussed-log     (async-mapd log  plussed-events)]
-  (produce writer 3)
-  (produce writer 5))
+; (let [writer          (producer)
+;       events          (deref writer)
+;       raw-log         (async-mapd log  events)
+;       squared-events  (async-mapd #(* % %)  events)
+;       squared-log     (async-mapd log  squared-events)
+;       plussed-events  (async-mapd (partial + 10) squared-events)
+;       plussed-log     (async-mapd log  plussed-events)]
+;   (produce writer 3)
+;   (produce writer 5))
 
