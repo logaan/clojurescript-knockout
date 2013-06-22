@@ -73,7 +73,7 @@
           (acell)
           values))
 
-(defn async-map [f coll]
+(defn map [f coll]
   (let [new-first (jq/$deferred)
         new-rest  (jq/$deferred)]
     (jq/done (afirst coll)
@@ -81,20 +81,20 @@
                (jq/done (f head) (fn [result]
                                    (jq/resolve new-first result)))))
     (jq/done (arest coll)
-             (fn [tail] (jq/resolve new-rest (async-map f tail))))
+             (fn [tail] (jq/resolve new-rest (map f tail))))
     (acell new-first new-rest)))
 
-(defn async-mapd [f coll]
-  (async-map (comp deferred f) coll))
+(defn mapd [f coll]
+  (map (comp deferred f) coll))
 
 ; (let [first-event     (jq/$deferred)
 ;       second-event    (jq/$deferred)
 ;       events          (aseq [first-event second-event])
-;       raw-log         (async-mapd log events)
-;       squared-events  (async-mapd #(* % %) events)
-;       squared-log     (async-mapd log squared-events)
-;       plussed-events  (async-mapd #(+ 10 %) squared-events)
-;       plussed-log     (async-mapd log plussed-events)]
+;       raw-log         (mapd log events)
+;       squared-events  (mapd #(* % %) events)
+;       squared-log     (mapd log squared-events)
+;       plussed-events  (mapd #(+ 10 %) squared-events)
+;       plussed-log     (mapd log plussed-events)]
 ;   (jq/resolve first-event  3)
 ;   (jq/resolve second-event 5))
 
@@ -112,39 +112,40 @@
 
 ; (let [writer        (producer)
 ;       reader        (deref writer)
-;       logged-events (async-mapd log reader)]
+;       logged-events (mapd log reader)]
 ;   (produce writer 1)
 ;   (produce writer 2))
 
 ; (let [writer          (producer)
 ;       events          (deref writer)
-;       raw-log         (async-mapd log  events)
-;       squared-events  (async-mapd #(* % %)  events)
-;       squared-log     (async-mapd log  squared-events)
-;       plussed-events  (async-mapd (partial + 10) squared-events)
-;       plussed-log     (async-mapd log  plussed-events)]
+;       raw-log         (mapd log  events)
+;       squared-events  (mapd #(* % %)  events)
+;       squared-log     (mapd log  squared-events)
+;       plussed-events  (mapd (partial + 10) squared-events)
+;       plussed-log     (mapd log  plussed-events)]
 ;   (produce writer 3)
 ;   (produce writer 5))
 
-(defn async-merge [as1 as2]
+(defn merge [as1 as2]
   (let [writer        (producer)
         output-seq    (deref writer)
         add-to-writer (partial produce writer)]
-    (async-mapd add-to-writer as1)
-    (async-mapd add-to-writer as2)
+    (mapd add-to-writer as1)
+    (mapd add-to-writer as2)
     output-seq))
 
-(let [writer1    (producer)
-      input1     (deref writer1)
-      writer2    (producer)
-      input2     (deref writer2)
-      merged     (async-merge input1 input2)
-      multiplied (async-mapd (partial * 2) merged)
-      logged     (async-mapd log multiplied)]
-  (produce writer1 1)
-  (produce writer2 2)
-  (produce writer1 1)
-  (produce writer2 2))
+; (let [writer1    (producer)
+;       input1     (deref writer1)
+;       writer2    (producer)
+;       input2     (deref writer2)
+;       merged     (merge input1 input2)
+;       multiplied (mapd (partial * 2) merged)
+;       logged     (mapd log multiplied)]
+;   (produce writer1 1)
+;   (produce writer2 2)
+;   (produce writer1 1)
+;   (produce writer2 2))
 
 ; It might be worth just having producer return a pair of writer and reader.
 ; The only reasonable usage seems to be to grab a writer and deref immediately.
+
