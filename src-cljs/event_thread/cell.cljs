@@ -3,9 +3,12 @@
   (:use [event-thread.test :only [test]])
   (:require [jayq.core :as jq]))
 
-(defn cell
-  ([] (cell nil nil))
-  ([f r] {:first f :rest r}))
+(defn cell [f r]
+  {:first f :rest r})
+
+(defn end-cell
+  ([] (end-cell nil nil))
+  ([f r] (assoc (cell f r) :end true)))
 
 (defn first [cell]
   (:first cell))
@@ -16,10 +19,10 @@
 (defn cons [value coll]
   (cell value coll))
 
-(test 1 (first (rest (cons 2 (cons 1 (cell))))))
+(test 1 (first (rest (cons 2 (cons 1 (end-cell))))))
 
 (defn end-cell? [cell]
-  (and (nil? (first cell)) (nil? (rest cell))))
+  (true? (:end cell)))
 
-(test true (end-cell? (rest (cons 1 (cell)))))
+(test true (end-cell? (rest (cons 1 (end-cell)))))
 

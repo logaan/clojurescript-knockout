@@ -13,7 +13,11 @@
 (defn dcell
   "No arguments gives an empty end cell. One argument is a cell with a value
   but no tail yet. Two arguments is a complete cell with value and tail."
-  ([] (dcell nil nil))
+  ([]
+   (let [self-deferred (deferred)
+         new-cell      (c/end-cell nil self-deferred)]
+     (jq/resolve self-deferred new-cell)
+     self-deferred))
   ([f] (dcell f (deferred)))
   ([f r] (deferred (c/cell f r))))
 
@@ -55,4 +59,10 @@
   (jq/done (rest dlist) (fn [two-onwards]
     (jq/done (c/rest two-onwards) (fn [three-onwards]
       (test 3 (c/first three-onwards)))))))
+
+(let [dlist            (cons 1 (dcell))
+      list-beyond-end  (rest (rest dlist))
+      value-beyond-end (first list-beyond-end)]
+  (jq/done value-beyond-end (fn [v] (test nil v)))
+  (jq/done list-beyond-end  (fn [v] (test true (c/end-cell? v)))))
 
