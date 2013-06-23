@@ -7,8 +7,8 @@ can't block, so we have to be async.
 The list will appear to the outside world like any other sequence. However all
 values will be deferred. To get the actual value you must use jayq.core/done to
 register a callback. You can operate on the list even before values exist, so
-it's safe to say (first (rest (rest alist))) to get a deferred that represents
-the 3rd value that will exist in the alist.
+it's safe to say `(first (rest (rest alist)))` to get a deferred that
+represents the 3rd value that will exist in the alist.
 
 There are three levels of abstraction. The lower is the
 [cell](/src-cljs/event_thread/cell.cljs). A cell is just like a list cons cell.
