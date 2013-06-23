@@ -1,5 +1,5 @@
 (ns event-thread.aseq-test
-  (use event-thread.test :only [test]))
+  (:use [event-thread.test :only [test]]))
 
 ; (let [writer        (producer)
 ;       reader        (deref writer)
