@@ -54,7 +54,12 @@
 
 (defn acell
   ([] (acell (jq/$deferred) (jq/$deferred)))
-  ([first rest] {:first first :rest rest}))
+  ([first rest] {:first first :rest rest :empty? false}))
+
+(defn empty-acell []
+  {:empty? true})
+
+(def empty? :empty?)
 
 (defn deferred [value]
   (jq/resolve (jq/$deferred) value))
@@ -81,7 +86,10 @@
                (jq/done (f head) (fn [result]
                                    (jq/resolve new-first result)))))
     (jq/done (arest coll)
-             (fn [tail] (jq/resolve new-rest (map f tail))))
+             (fn [tail]
+               (if (empty? tail)
+                        (jq/resolve new-rest (empty-acell))
+                        (jq/resolve new-rest (map f tail)))))
     (acell new-first new-rest)))
 
 (defn mapd [f coll]
@@ -97,6 +105,14 @@
 ;       plussed-log     (mapd log plussed-events)]
 ;   (jq/resolve first-event  3)
 ;   (jq/resolve second-event 5))
+
+; Should output:
+;   3
+;   9
+;   19
+;   5
+;   25
+;   35
 
 (defn producer []
   (atom (acell)))
@@ -163,16 +179,23 @@
                         (jq/resolve new-first result)
                         (jq/done (arest coll)
                                  (fn [tail]
-                                   (jq/resolve new-rest (reductions f result tail)))))))
-           )
+                                   (if (empty? tail)
+                                    (jq/resolve new-rest (empty-acell))
+                                    (jq/resolve new-rest (reductions f result tail)))))))))
     (acell new-first new-rest)))
 
-(let [writer      (producer)
-      reader      (deref writer)
-      running-sum (reductions (comp deferred +) 0 reader)
-      logged      (mapd log running-sum)]
-  (produce writer 1)
-  (produce writer 2)
-  (produce writer 3)
-  (produce writer 4))
+; (let [writer      (producer)
+;       reader      (deref writer)
+;       running-sum (reductions (comp deferred +) 0 reader)
+;       logged      (mapd log running-sum)]
+;   (produce writer 1)
+;   (produce writer 2)
+;   (produce writer 3)
+;   (produce writer 4))
+
+; Should produce:
+; 1
+; 3
+; 6
+; 10
 
