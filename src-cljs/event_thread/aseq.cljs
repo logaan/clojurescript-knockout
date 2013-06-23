@@ -74,45 +74,7 @@
   (acell value (deferred coll)))
 
 (defn aseq [values]
-  (reduce (fn [coll v] (acons v coll))
-          (empty-acell)
-          values))
-
-(defn map [f coll]
-  (let [new-first (jq/$deferred)
-        new-rest  (jq/$deferred)]
-    (jq/done (afirst coll)
-             (fn [head]
-               (jq/done (f head) (fn [result]
-                                   (jq/resolve new-first result)))))
-    (jq/done (arest coll)
-             (fn [tail]
-               (if (empty? tail)
-                        (jq/resolve new-rest (empty-acell))
-                        (jq/resolve new-rest (map f tail)))))
-    (acell new-first new-rest)))
-
-(defn mapd [f coll]
-  (map (comp deferred f) coll))
-
-; (let [first-event     (jq/$deferred)
-;       second-event    (jq/$deferred)
-;       events          (aseq [first-event second-event])
-;       raw-log         (mapd log events)
-;       squared-events  (mapd #(* % %) events)
-;       squared-log     (mapd log squared-events)
-;       plussed-events  (mapd #(+ 10 %) squared-events)
-;       plussed-log     (mapd log plussed-events)]
-;   (jq/resolve first-event  3)
-;   (jq/resolve second-event 5))
-
-; Should output:
-;   3
-;   9
-;   19
-;   5
-;   25
-;   35
+  (cljs.core/reduce (fn [coll v] (acons v coll)) (empty-acell) values))
 
 (defn producer []
   (atom (acell)))
@@ -153,39 +115,6 @@
 ; 5
 ; 25
 ; 35
-
-(defn merge [as1 as2]
-  (let [writer        (producer)
-        output-seq    (deref writer)
-        add-to-writer (partial produce writer)]
-    (mapd add-to-writer as1)
-    (mapd add-to-writer as2)
-    output-seq))
-
-; (let [writer1    (producer)
-;       input1     (deref writer1)
-;       writer2    (producer)
-;       input2     (deref writer2)
-;       merged     (merge input1 input2)
-;       multiplied (mapd (partial * 2) merged)
-;       logged     (mapd log multiplied)]
-;   (produce writer1 1)
-;   (produce writer2 2)
-;   (produce writer1 1)
-;   (produce writer2 2))
-
-; Should produce:
-; 2
-; 4
-; 2
-; 4
-
-; It might be worth just having producer return a pair of writer and reader.
-; The only reasonable usage seems to be to grab a writer and deref immediately.
-
-
-; This logic is largely duplicated from map. Map should probably just use this
-; but ignore the seed value.
 
 (defn reduce
   ([f seed coll]
@@ -235,3 +164,65 @@
 ; 3
 ; 6
 ; 10
+
+(defn map [f coll]
+  (let [writer (producer)
+        reader (deref writer)]
+    (reduce (fn [s v] (jq/done (f v) (partial produce writer))) nil coll)
+    reader))
+
+(defn mapd [f coll]
+  (map (comp deferred f) coll))
+
+(let [first-event     (jq/$deferred)
+      second-event    (jq/$deferred)
+      events          (aseq [first-event second-event])
+      raw-log         (mapd log events)
+      squared-events  (mapd #(* % %) events)
+      squared-log     (mapd log squared-events)
+      plussed-events  (mapd #(+ 10 %) squared-events)
+      plussed-log     (mapd log plussed-events)]
+  (jq/resolve first-event  3)
+  (jq/resolve second-event 5))
+
+; Should output:
+;   3
+;   9
+;   19
+;   5
+;   25
+;   35
+
+(defn merge [as1 as2]
+  (let [writer        (producer)
+        output-seq    (deref writer)
+        add-to-writer (partial produce writer)]
+    (mapd add-to-writer as1)
+    (mapd add-to-writer as2)
+    output-seq))
+
+; (let [writer1    (producer)
+;       input1     (deref writer1)
+;       writer2    (producer)
+;       input2     (deref writer2)
+;       merged     (merge input1 input2)
+;       multiplied (mapd (partial * 2) merged)
+;       logged     (mapd log multiplied)]
+;   (produce writer1 1)
+;   (produce writer2 2)
+;   (produce writer1 1)
+;   (produce writer2 2))
+
+; Should produce:
+; 2
+; 4
+; 2
+; 4
+
+; It might be worth just having producer return a pair of writer and reader.
+; The only reasonable usage seems to be to grab a writer and deref immediately.
+
+
+; This logic is largely duplicated from map. Map should probably just use this
+; but ignore the seed value.
+
