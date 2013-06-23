@@ -1,7 +1,8 @@
 (ns event-thread.aseq
   (:use [event-thread.test :only [test]]
         [jayq.util :only [log]])
-  (:require [jayq.core :as jq]))
+  (:require [jayq.core :as jq]
+            [event-thread.cell :as c]))
 
 ; Async cell
 (defn acell
