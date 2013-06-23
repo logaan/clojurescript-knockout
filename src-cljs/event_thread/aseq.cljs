@@ -149,5 +149,30 @@
 ; It might be worth just having producer return a pair of writer and reader.
 ; The only reasonable usage seems to be to grab a writer and deref immediately.
 
-(defn reduce [f seed coll]
-  )
+
+; This logic is largely duplicated from map. Map should probably just use this
+; but ignore the seed value.
+(defn reductions [f seed coll]
+  (let [new-first (jq/$deferred)
+        new-rest  (jq/$deferred)]
+  ; call f with the seed value, and call reductions on the tail with the return as the seed.
+  (jq/done (afirst coll)
+           (fn [head]
+             (jq/done (f seed head)
+                      (fn [result]
+                        (jq/resolve new-first result)
+                        (jq/done (arest coll)
+                                 (fn [tail]
+                                   (jq/resolve new-rest (reductions f result tail)))))))
+           )
+    (acell new-first new-rest)))
+
+(let [writer      (producer)
+      reader      (deref writer)
+      running-sum (reductions (comp deferred +) 0 reader)
+      logged      (mapd log running-sum)]
+  (produce writer 1)
+  (produce writer 2)
+  (produce writer 3)
+  (produce writer 4))
+
