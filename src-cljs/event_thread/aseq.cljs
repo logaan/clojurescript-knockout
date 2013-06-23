@@ -186,36 +186,6 @@
 
 ; This logic is largely duplicated from map. Map should probably just use this
 ; but ignore the seed value.
-(defn reductions [f seed coll]
-  (let [new-first (jq/$deferred)
-        new-rest  (jq/$deferred)]
-  ; call f with the seed value, and call reductions on the tail with the return as the seed.
-  (jq/done (afirst coll)
-           (fn [head]
-             (jq/done (f seed head)
-                      (fn [result]
-                        (jq/resolve new-first result)
-                        (jq/done (arest coll)
-                                 (fn [tail]
-                                   (if (empty? tail)
-                                    (jq/resolve new-rest (empty-acell))
-                                    (jq/resolve new-rest (reductions f result tail)))))))))
-    (acell new-first new-rest)))
-
-; (let [writer      (producer)
-;       reader      (deref writer)
-;       running-sum (reductions (comp deferred +) 0 reader)
-;       logged      (mapd log running-sum)]
-;   (produce writer 1)
-;   (produce writer 2)
-;   (produce writer 3)
-;   (produce writer 4))
-
-; Should produce:
-; 1
-; 3
-; 6
-; 10
 
 (defn reduce
   ([f seed coll]
@@ -239,3 +209,29 @@
 ; Should produce:
 ; 10
 
+(defn reductions [f seed coll]
+  (let [writer    (producer)
+        reader    (deref writer)
+        emit-seed (fn [s v]
+                    (let [result-def (f s v)]
+                      (jq/done result-def #(produce writer %)
+                      result-def)))]
+    (produce writer seed)
+    (reduce emit-seed seed coll)
+    reader))
+
+; (let [writer      (producer)
+;       reader      (deref writer)
+;       running-sum (reductions (comp deferred +) 0 reader)
+;       logged      (mapd log running-sum)]
+;   (produce writer 1)
+;   (produce writer 2)
+;   (produce writer 3)
+;   (produce writer 4))
+
+; Should produce:
+; 0
+; 1
+; 3
+; 6
+; 10
