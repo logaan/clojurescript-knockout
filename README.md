@@ -1,5 +1,27 @@
 # Event thread
 
+Here I have implemented asynchronous lists. They server the same purpose as
+blocking lazy seqs do in Cloure. But because javascript is single threaded we
+can't block, so we have to be async.
+
+The list will appear to the outside world like any other sequence. However all
+values will be deferred. To get the actual value you must use jayq.core/done to
+register a callback. You can operate on the list even before values exist, so
+it's safe to say (first (rest (rest alist))) to get a deferred that represents
+the 3rd value that will exist in the alist.
+
+There are three levels of abstraction. The lower is the
+[cell](/src-cljs/event_thread/cell.cljs). A cell is just like a list cons cell.
+Ontop of cells are build [deferred cells](/src-cljs/event_thread/dcell.cljs).
+They are a cell wrapped is a deferred that has a deferred cell for rest. First
+in a deferred cell will be an actual value. At the top we have
+[aseqs](/src-cljs/event_thread/dlist.cljs), some of which will have a writer
+atom. Using the writer atom you can inject values into the tail of the
+sequence. Consumers of the alist (the reader part) will only ever see a
+functional interface.
+
+--------
+
 All the good stuff is in
 [`src-cljs/event_thread/aseq.cljs`]
 (/src-cljs/event\_thread/aseq.cljs)
