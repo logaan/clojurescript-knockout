@@ -75,7 +75,7 @@
 
 (defn aseq [values]
   (reduce (fn [coll v] (acons v coll))
-          (acell)
+          (empty-acell)
           values))
 
 (defn map [f coll]
@@ -132,6 +132,10 @@
 ;   (produce writer 1)
 ;   (produce writer 2))
 
+; Should produce:
+; 1
+; 2
+
 ; (let [writer          (producer)
 ;       events          (deref writer)
 ;       raw-log         (mapd log  events)
@@ -141,6 +145,14 @@
 ;       plussed-log     (mapd log  plussed-events)]
 ;   (produce writer 3)
 ;   (produce writer 5))
+
+; Should produce:
+; 3
+; 9
+; 19
+; 5
+; 25
+; 35
 
 (defn merge [as1 as2]
   (let [writer        (producer)
@@ -161,6 +173,12 @@
 ;   (produce writer2 2)
 ;   (produce writer1 1)
 ;   (produce writer2 2))
+
+; Should produce:
+; 2
+; 4
+; 2
+; 4
 
 ; It might be worth just having producer return a pair of writer and reader.
 ; The only reasonable usage seems to be to grab a writer and deref immediately.
@@ -197,5 +215,27 @@
 ; 1
 ; 3
 ; 6
+; 10
+
+(defn reduce
+  ([f seed coll]
+   (let [output (jq/$deferred)]
+     (reduce output f seed coll)
+     output))
+  ([output f seed coll]
+    (jq/done (afirst coll) (fn [head]
+      (jq/done (f seed head) (fn [result]
+        (jq/done (arest coll) (fn [tail]
+          (if (empty? tail)
+            (jq/resolve output result)
+            (reduce output f result tail))))))))))
+
+; (->> [1 2 3 4]
+;      (cljs.core/map deferred)
+;      (aseq)
+;      (reduce (comp deferred +) 0)
+;      ((fn [reduce-deferred] (jq/done reduce-deferred log))))
+;
+; Should produce:
 ; 10
 
